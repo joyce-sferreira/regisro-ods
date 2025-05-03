@@ -1,0 +1,160 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Registro de Ações Culturais</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f9f9f9;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        form, .lista {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        input, select, textarea, button {
+            margin-top: 10px;
+            padding: 10px;
+            width: 100%;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        .ods4 { background-color: #e0f7fa; }
+        .ods10 { background-color: #fce4ec; }
+        .ods11 { background-color: #fff3e0; }
+        .ods17 { background-color: #e8eaf6; }
+        ul { list-style: none; padding: 0; }
+        li {
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+        .botoes button {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Registro de Ações Culturais</h1>
+    <form id="formulario">
+        <input type="text" id="acao" placeholder="Nome da Ação Cultural" required>
+        <input type="date" id="data" required>
+        <input type="text" id="responsavel" placeholder="Responsável pela Ação" required>
+        <textarea id="descricao" placeholder="Descrição da Ação" required></textarea>
+        <select id="ods" required>
+            <option value="">Selecione a ODS relacionada</option>
+            <option value="ODS 4 – Educação de Qualidade">ODS 4 – Educação de Qualidade</option>
+            <option value="ODS 10 – Redução das Desigualdades">ODS 10 – Redução das Desigualdades</option>
+            <option value="ODS 11 – Cidades e Comunidades Sustentáveis">ODS 11 – Cidades e Comunidades Sustentáveis</option>
+            <option value="ODS 17 – Parcerias e Meios de Implementação">ODS 17 – Parcerias e Meios de Implementação</option>
+        </select>
+        <button type="submit">Registrar Ação</button>
+    </form>
+
+    <div class="lista">
+        <h2>Ações Registradas:</h2>
+        <ul id="acoes"></ul>
+        <button onclick="exportarCSV()">Exportar como CSV</button>
+    </div>
+
+    <script>
+        const formulario = document.getElementById('formulario');
+        const acoes = document.getElementById('acoes');
+
+        function getClasseODS(ods) {
+            if (ods.includes("ODS 4")) return "ods4";
+            if (ods.includes("ODS 10")) return "ods10";
+            if (ods.includes("ODS 11")) return "ods11";
+            if (ods.includes("ODS 17")) return "ods17";
+            return "";
+        }
+
+        function salvarLocal(dados) {
+            localStorage.setItem("acoes", JSON.stringify(dados));
+        }
+
+        function carregarAcoes() {
+            const dados = JSON.parse(localStorage.getItem("acoes")) || [];
+            acoes.innerHTML = "";
+            dados.forEach((item, index) => {
+                const li = document.createElement("li");
+                li.className = getClasseODS(item.ods);
+                li.innerHTML = `<strong>${item.acao}</strong> (${item.data})<br>
+                    <em>${item.responsavel}</em><br>
+                    ${item.descricao}<br>
+                    <strong>${item.ods}</strong><br>
+                    <div class="botoes">
+                        <button onclick="editar(${index})">Editar</button>
+                        <button onclick="excluir(${index})">Excluir</button>
+                    </div>`;
+                acoes.appendChild(li);
+            });
+        }
+
+        formulario.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const novaAcao = {
+                acao: document.getElementById('acao').value,
+                data: document.getElementById('data').value,
+                responsavel: document.getElementById('responsavel').value,
+                descricao: document.getElementById('descricao').value,
+                ods: document.getElementById('ods').value
+            };
+            const dados = JSON.parse(localStorage.getItem("acoes")) || [];
+            dados.push(novaAcao);
+            salvarLocal(dados);
+            formulario.reset();
+            carregarAcoes();
+        });
+
+        function excluir(index) {
+            const dados = JSON.parse(localStorage.getItem("acoes")) || [];
+            dados.splice(index, 1);
+            salvarLocal(dados);
+            carregarAcoes();
+        }
+
+        function editar(index) {
+            const dados = JSON.parse(localStorage.getItem("acoes")) || [];
+            const item = dados[index];
+            document.getElementById('acao').value = item.acao;
+            document.getElementById('data').value = item.data;
+            document.getElementById('responsavel').value = item.responsavel;
+            document.getElementById('descricao').value = item.descricao;
+            document.getElementById('ods').value = item.ods;
+            dados.splice(index, 1);
+            salvarLocal(dados);
+            carregarAcoes();
+        }
+
+        function exportarCSV() {
+            const dados = JSON.parse(localStorage.getItem("acoes")) || [];
+            let csv = "Ação,Data,Responsável,Descrição,ODS\n";
+            dados.forEach(item => {
+                csv += `"${item.acao}","${item.data}","${item.responsavel}","${item.descricao}","${item.ods}"\n`;
+            });
+            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+            const link = document.createElement("a");
+            link.setAttribute("href", URL.createObjectURL(blob));
+            link.setAttribute("download", "acoes_ods.csv");
+            link.style.display = "none";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Inicialização
+        carregarAcoes();
+    </script>
+</body>
+</html>
